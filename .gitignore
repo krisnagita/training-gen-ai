@@ -1,0 +1,7 @@
+.env
+.DS_Store
+development.ipynb
+workflow.png
+venv
+backup
+/utilities/__pycache__
