@@ -1,5 +1,4 @@
-from langchain_core.messages import (AIMessage, BaseMessage, HumanMessage, 
-                                     SystemMessage, trim_messages)
+from langchain_core.messages import AIMessage, HumanMessage, trim_messages
 
 def chat_to_memory(list_chat_history, n_used_memory=10):
     
@@ -10,6 +9,9 @@ def chat_to_memory(list_chat_history, n_used_memory=10):
             memory.append(HumanMessage(content=list_chat_history[i]['input']))
         elif i % 2 == 1:
             memory.append(AIMessage(content=list_chat_history[i]['output']))
+
+    if len(memory) % 2 == 1:
+        memory.append(AIMessage(content=""))
             
     selected_memory = trim_messages(
         memory,

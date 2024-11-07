@@ -1,10 +1,9 @@
+import os
+import base64
 from langchain_core.documents import Document
 from unstructured.partition.pdf import partition_pdf
 from .model import model_embedding
 from langchain_community.vectorstores import FAISS
-from langchain_openai import AzureOpenAIEmbeddings
-import streamlit as st
-import os
 from concurrent.futures import ThreadPoolExecutor
 
 def get_pdf_text(pdf_path):
@@ -64,28 +63,79 @@ def save_uploaded_file(uploaded_files):
     
     """
     # Create the temporary folder if it doesn't exist
-    file_path_final = []
+    saved_paths = {
+        "pdf_files": [],
+        "jpg_files": []
+    }
+
+    # Ensure directories exist
+    pdf_dir = "./database/uploaded_file"
+    jpg_dir = "./database/uploaded_image"
+
     for file in uploaded_files:
-        file_path = os.path.join("./database/uploaded_file", file.name)
+        if file.name.lower().endswith(".pdf"):
+            file_path = os.path.join(pdf_dir, file.name)
+            saved_paths["pdf_files"].append(file_path)
+        elif file.name.lower().endswith(".jpg"):
+            file_path = os.path.join(jpg_dir, file.name)
+            saved_paths["jpg_files"].append(file_path)
+        else:
+            # Optionally, handle unsupported file types
+            print(f"Unsupported file type: {file.name}")
+            continue
+
+        # Write the file to the appropriate directory
         with open(file_path, "wb") as f:
             f.write(file.getbuffer())
-            file_path_final.append(file_path)
-    
-    return file_path_final
 
-# Function to process all PDFs in a given directory
-def process_pdf_in_dir(uploaded_files):
+    return saved_paths
+
+def process_pdf(uploaded_files):
     
-    # Prepare arguments for each PDF file
-    args = [(file) for file in uploaded_files]
+    args = [(file) for file in uploaded_files["pdf_files"]]
     
     # Use ThreadPoolExecutor to process all PDFs simultaneously
     with ThreadPoolExecutor(max_workers=3) as executor:
+        
         # Map the load_pdf_data function to all PDF files with corresponding arguments
         results = list(executor.map(get_pdf_text, args))
-        # print(f"Document Text\n\n: {results}")
     
     return results
+
+def image_to_base64(image_path):
+    """
+    Function:
+    Args:
+
+    Returns:
+    
+    """
+    with open(image_path, "rb") as image:
+         image_base64 = base64.b64encode(image.read()).decode("utf-8")
+
+    return image_base64
+
+def process_image(uploaded_files):
+    
+    args = [(file) for file in uploaded_files["jpg_files"]]
+    
+    # Use ThreadPoolExecutor to process all PDFs simultaneously
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        
+        # Map the load_pdf_data function to all PDF files with corresponding arguments
+        results = list(executor.map(image_to_base64, args))
+    
+    return results
+
+
+
+
+
+
+    
+
+
+
 
 
 

@@ -1,141 +1,73 @@
-import os
-from dotenv import load_dotenv
+import time
+import streamlit as st
 
 from utilities.memory import chat_to_memory, write_chat_history
 from utilities.model import model_embedding, ChatGPT
-from utilities.preprocess import get_pdf_text, store_in_vector_database, save_uploaded_file, process_pdf_in_dir
+from utilities.preprocess import store_in_vector_database, save_uploaded_file, process_image
 from langchain_community.vectorstores import FAISS
 
-from langchain.prompts import (ChatPromptTemplate, MessagesPlaceholder)
-from langchain.chains import (create_history_aware_retriever, create_retrieval_chain)
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
-import streamlit as st
+from langchain_core.messages import HumanMessage
 
-def qna_with_generative(user_question, input_language, chat_history):
+st.set_page_config(
+    page_title="EDTS Chatbot",
+    page_icon="assets/favicon.ico")
+
+def qna_with_generative(user_question, list_image_base64, input_language, chat_history):
     if input_language == "en":
         language = "English"
     elif input_language == "id":
         language = "Bahasa Indonesia"
-    
+
     if len(chat_history) == 0:
         chat_history = []
         memory= chat_to_memory([{"input":"", "output":""}])
     else:
         memory = chat_to_memory(chat_history)
     
-    contextualize_system_prompt = (
-    """
-        Given a chat history and the latest user question which might reference context in the chat history, 
-        Formulate a standalone question which can be understood 
-        Without the chat history. Do NOT answer the question, Just reformulate it if needed and otherwise return it as is
-    """
-    )
+    content = []
+    for image_base64 in list_image_base64:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}
+        })
+    
+    content.append({"type": "text", "text": user_question})
 
-    contextualize_prompt_template = ChatPromptTemplate.from_messages(
-        [
-            ("system", contextualize_system_prompt),
-            MessagesPlaceholder("chat_history"),
-            ("human", "{input}"),
-        ]
-    )
-
-    model = ChatGPT()
-    vector_store = FAISS.load_local("./database/faiss_index", model_embedding(), allow_dangerous_deserialization=True)
-    retriever = vector_store.as_retriever(search_type="similarity_score_threshold", search_kwargs={"score_threshold": 0.35})
-
-    history_aware_retriever = create_history_aware_retriever(model, retriever, contextualize_prompt_template)
-
-    f = open("system_prompt.txt", "r")
+    f = open("system_prompt_image.txt", "r")
     text_system_prompt = f.read()
 
     system_prompt = (
-        text_system_prompt.replace("language_here", language) + "\nHere is the context to help you answer:\n{context}"
+        text_system_prompt.replace("language_here", language)
     )
 
     prompt_template = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
             MessagesPlaceholder("chat_history"),
-            ("human", "{input}"),
+            HumanMessage(content),
         ]
     )
 
-    qna_chain = create_stuff_documents_chain(model, prompt_template)
+    model = ChatGPT()
+    
+    chain = prompt_template | model
+   
+    output_prompt = chain.invoke({"chat_history" : memory})
 
-    rag_chain = create_retrieval_chain(history_aware_retriever, qna_chain)
-
-    output_prompt = rag_chain.invoke({"input":user_question, "chat_history":memory, "language":language})
-
-    chat_history.append(
+    memory_to_write = []
+    memory_to_write.append(
         {"input": user_question}
     )
 
-    chat_history.append(
-        {"output": output_prompt["answer"]}
+    memory_to_write.append(
+        {"output": output_prompt.content}
     )
     
-    return output_prompt, chat_history
-
-# st.warning('You must upload document before asking the AI-assistant', icon="⚠️")
-# pdf_doc = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", 
-#                             accept_multiple_files=True, type=["pdf"])
-
-# if st.button("Submit & Process"):
-#     with st.spinner("Processing..."):
-#         if pdf_doc is not None:
-#             list_file_uploaded = save_uploaded_file(pdf_doc)
-#             extracted_pdf = process_pdf_in_dir(list_file_uploaded)
-#             store_in_vector_database(extracted_pdf)
-#             print(list_file_uploaded)
-#             st.success("File saved successfully at folder Database (uploaded_file) for files and (faiss_index) for vector database")
-#             #Welcoming message
-
-#         for file in list_file_uploaded:
-#             print(f"File: {file}")
-
-        
-#     st.write("-------")
-
-#     welcoming_message = "Hello! You can ask me anything that related to document you've upload"
-#     st.chat_message("ai").markdown(welcoming_message)
-
-# # Initialize chat history
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
-
-# # Display chat messages from history on app rerun
-# for message in st.session_state.messages:
-#     with st.chat_message(message["role"]):
-#         st.markdown(message["content"])
-
-# #For first chat memory intialization
-# list_memory = []
-
-# # React to user input
-# if user_question := st.chat_input("Your Question"):
-#     st.chat_message("user").markdown(user_question)
-#     # Add user message to chat history
-#     st.session_state.messages.append({"role": "user", "content": user_question})
-
-
-#     response, memory_chat = qna_with_generative(user_question, "en", list_memory)
-#     write_chat_history(memory_chat)
-
-#     with st.chat_message("assistant"):
-#          with st.spinner("Thinking..."):
-#              st.markdown(response["answer"])
-    
-#     # Add assistant response to chat history
-#     st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
-
-import time
-
-# Function to simulate streamed response
-# def response_streamer(response_text):
-#     for word in response_text.split():
-#         yield word + " "
-#         time.sleep(0.05)  # Delay between words for streaming effect
+    return output_prompt, memory_to_write
 
 def response_streamer(response_text):
     """
@@ -152,56 +84,59 @@ def response_streamer(response_text):
         time.sleep(0.2)  # Add delay between paragraphs
 
 # Initialize file processed flag in session state to track processing status
-if "file_processed" not in st.session_state:
-    st.session_state.file_processed = False
+if "image_processed" not in st.session_state:
+    st.session_state.image_processed = False
+
+# Initialize list_memory in session state to track memory across interactions
+if "list_memory" not in st.session_state:
+    st.session_state.list_memory = []
 
 # Placeholder for warning/success message
 status_message = st.empty()
 
 # Display warning if file is not yet processed, or success if already processed
-if st.session_state.file_processed:
-    status_message.success("Document processed successfully! You can now interact with the assistant.", icon="✅")
+if st.session_state.image_processed:
+    status_message.success("Image processed successfully! You can now interact with the assistant.", icon="✅")
 else:
-    status_message.warning("You must upload and submit a document before asking the AI assistant.", icon="⚠️")
+    status_message.warning("You must upload and submit an image before asking the AI assistant.", icon="⚠️")
 
 # File uploader
-pdf_doc = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", 
-                           accept_multiple_files=True, type=["jpg","png"])
+image_file = st.file_uploader("Upload your Image Files and Click on the Submit & Process Button", 
+                           accept_multiple_files=True, type=["jpg"])
 
 # Process button functionality
 if st.button("Submit & Process"):
-    if pdf_doc is not None:
-        list_file_uploaded = save_uploaded_file(pdf_doc)
+    if image_file is not None:
+        list_file_uploaded = save_uploaded_file(image_file)
 
         # Progress bar for detailed processing feedback
         progress_text = "Processing Image files..."
         progress_bar = st.progress(0, text=progress_text)
 
         # Step 1: Extract PDF content
-        extracted_pdf = process_pdf_in_dir(list_file_uploaded)
-        progress_bar.progress(33, text="Extracted Image content...")
+        st.session_state.list_image_base64 = process_image(list_file_uploaded)
+        progress_bar.progress(33, text="Extracted PDF content...")
 
         # Step 2: Store in vector database
-        store_in_vector_database(extracted_pdf)
         progress_bar.progress(66, text="Stored data in vector database...")
 
         # Step 3: Complete
         progress_bar.progress(100, text="Completed processing files.")
         
-        # Set processed flag to True after successful processing and update status message
-        st.session_state.file_processed = True
-        status_message.success("Document processed successfully! You can now interact with the assistant.", icon="✅")
+        # # Set processed flag to True after successful processing and update status message
+        st.session_state.image_processed = True
+        status_message.success("Image processed successfully! You can now interact with the assistant.", icon="✅")
 
-        for file in list_file_uploaded:
-            print(f"File: {file}")
+        for img in image_file:
+            print(f"Image: {img}")
             
     else:
-        st.error("Please upload a file before submitting.")
+        st.error("Please upload a image before submitting.")
 
 # Separator line
 st.divider()  # Alternatively, you can use st.write("----") for a custom separator
 
-# Initialize chat history if not present
+#Message Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -210,33 +145,31 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Initialize memory list for first chat memory
-list_memory = []
-
 # Respond to user input only if the document is processed
-if st.session_state.file_processed:
+if st.session_state.image_processed:
     if user_question := st.chat_input("Your Question"):
         st.chat_message("user").markdown(user_question)
         st.session_state.messages.append({"role": "user", "content": user_question})
 
         # Generate assistant response and memory update
-        response, memory_chat = qna_with_generative(user_question, "en", list_memory)
-        write_chat_history(memory_chat)
-
+        with st.spinner("Assistant is thinking..."):
+            response, memory_chat = qna_with_generative(user_question, st.session_state.list_image_base64, "en",  st.session_state.list_memory)
+            st.session_state.list_memory.append(memory_chat[0])
+            st.session_state.list_memory.append(memory_chat[1])
+            write_chat_history(st.session_state.list_memory)
+            
         # Display assistant response as streamed text
         with st.chat_message("assistant"):
             response_container = st.empty()
             streamed_response = ""
-            for chunk in response_streamer(response["answer"]):
+            for chunk in response_streamer(response.content):
                 streamed_response += chunk
                 response_container.markdown(streamed_response)
 
         # Save assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response["answer"]})
+        st.session_state.messages.append({"role": "assistant", "content": response.content})
 
 else:
-    # st.warning("Chatbox will be shown after you upload document")
-
     st.markdown(
         """
         <div style="background-color: #EEF0F4; padding: 10px 15px; border-radius: 5px; text-align: center">

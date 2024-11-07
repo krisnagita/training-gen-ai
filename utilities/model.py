@@ -7,6 +7,7 @@ from langchain_community.callbacks import OpenAICallbackHandler
 #Load environment variables
 load_dotenv()
 
+#Text Embedding 3 Small
 def model_embedding():
     model = AzureOpenAIEmbeddings(
         azure_deployment= os.getenv("AZURE_DEPLOYMENT_EMBBEDING"),
@@ -16,6 +17,7 @@ def model_embedding():
     
     return model
 
+#GPT 4o
 def ChatGPT():
     model = AzureChatOpenAI(
         temperature = 0.0,
