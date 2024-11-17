@@ -1,0 +1,12 @@
+# "unstructured[all-docs]"
+langchain-community
+langchain
+langchain-core
+pdfplumber 
+langchain-openai
+streamlit
+watchdog
+faiss-cpu
+langgraph
+pillow
+# ruff

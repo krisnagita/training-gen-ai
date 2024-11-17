@@ -1,0 +1,3 @@
+Chat History: 
+Human: Tell me about offside in very simple terms
+AI: A player is offside if they are closer to the opponent's goal than both the ball and the second-last opponent when the ball is played to them by a teammate. However, being in an offside position is not an offence by itself. It only becomes an offence if the player gets involved in active play, such as touching the ball or interfering with an opponent. There are no offside offences if the player receives the ball directly from a goal kick, throw-in, or corner kick.

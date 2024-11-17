@@ -1,4 +1,8 @@
 .env
+/script-solution/.env
+/script-hands-on/.env
+/script-solution/utilities/__pycache__
+/script-hands-on/utilities/__pycache__
 .DS_Store
 development.ipynb
 workflow.png
