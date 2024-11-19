@@ -1,3 +1,16 @@
 Chat History: 
-Human: Tell me about offside in very simple terms
-AI: A player is offside if they are closer to the opponent's goal than both the ball and the second-last opponent when the ball is played to them by a teammate. However, being in an offside position is not an offence by itself. It only becomes an offence if the player gets involved in active play, such as touching the ball or interfering with an opponent. There are no offside offences if the player receives the ball directly from a goal kick, throw-in, or corner kick.
+Human: What is the table about?
+AI: The table appears to be a list of football (soccer) players with various attributes. The columns include:
+
+- Unnamed: 0: An index column.
+- ID: A unique identifier for each player.
+- Name: The name of the player.
+- Age: The age of the player.
+- Nationality: The nationality of the player.
+- Overall: The player's overall rating.
+- Potential: The player's potential rating.
+- Club: The club the player is associated with.
+- Value: The market value of the player.
+- Wage: The weekly wage of the player.
+
+The table provides detailed information about each player's attributes, including their current club, market value, and wage.
