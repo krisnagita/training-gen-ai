@@ -5,11 +5,13 @@ from unstructured.partition.pdf import partition_pdf
 from .model import model_embedding
 from langchain_community.vectorstores import FAISS
 from concurrent.futures import ThreadPoolExecutor
+from langchain_community.document_loaders import PyPDFLoader
 import cv2
+
 
 def get_pdf_text(pdf_path):
     """
-    Extracts text and metadata from a PDF and returns them as Document objects.
+    Extracts text and metadata from a PDF and returns them as Document objects using Unstructured.
 
     Args:
         pdf_path (str): Path to the PDF file to process.
@@ -35,6 +37,25 @@ def get_pdf_text(pdf_path):
         extracted_pdf.append(Document(page_content=extracted_element[i].text, metadata=data_metadata))
     
     return extracted_pdf
+
+def get_pdf_text_pypdf(pdf_path):
+    """
+    Extracts text and metadata from a PDF and returns them as Document objects using PyPDFLoader.
+
+    Args:
+    pdf_path (str): Path to the PDF file to process.
+
+    Returns:
+    extracted_pdf (list): A list of `Document` objects containing page content and metadata for each PDF page.
+    """
+    loader = PyPDFLoader(pdf_path)
+    extracted_pdf = []
+    
+    for page in loader.load():
+        extracted_pdf.append(page)
+    
+    return extracted_pdf
+
 
 def store_in_vector_database(extracted_pdf):
     """
@@ -121,7 +142,8 @@ def process_pdf(uploaded_files):
     with ThreadPoolExecutor(max_workers=3) as executor:
         
         # Map the load_pdf_data function to all PDF files with corresponding arguments
-        results = list(executor.map(get_pdf_text, args))
+        # results = list(executor.map(get_pdf_text, args))
+        results = list(executor.map(get_pdf_text_pypdf, args))
     
     return results
 

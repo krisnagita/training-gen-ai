@@ -1,16 +1,26 @@
 Chat History: 
-Human: What is the table about?
-AI: The table appears to be a list of football (soccer) players with various attributes. The columns include:
+Human: Tell me about substition procedure
+AI: The substitution procedure is as follows:
 
-- Unnamed: 0: An index column.
-- ID: A unique identifier for each player.
-- Name: The name of the player.
-- Age: The age of the player.
-- Nationality: The nationality of the player.
-- Overall: The player's overall rating.
-- Potential: The player's potential rating.
-- Club: The club the player is associated with.
-- Value: The market value of the player.
-- Wage: The weekly wage of the player.
+1. The names of the substitutes must be given to the referee before the start of the match. Any substitute not named by this time may not take part in the match.
 
-The table provides detailed information about each player's attributes, including their current club, market value, and wage.
+2. To replace a player with a substitute, the following must be observed:
+   - The referee must be informed before any substitution is made.
+   - The player being substituted must receive the referee’s permission to leave the field of play, unless already off the field, and must leave by the nearest point on the boundary line unless the referee indicates that the player may leave directly and immediately at the halfway line or another point (e.g., for safety/security or injury).
+   - The player must go immediately to the technical area or dressing room and take no further part in the match, except where return substitutions are permitted.
+   - If a player who is to be substituted refuses to leave, play continues.
+
+3. The substitute only enters:
+   - During a stoppage in play.
+   - At the halfway line.
+   - After the player being replaced has left.
+   - After receiving a signal from the referee.
+
+4. The substitution is completed when a substitute enters the field of play; from that moment, the replaced player becomes a substituted player and the substitute becomes a player and can take any restart.
+
+5. All substituted players and substitutes are subject to the referee’s authority, whether they play or not.
+Human: How to change goalkeeper
+AI: To change the goalkeeper, the following conditions must be met:
+
+- The referee must be informed before the change is made.
+- The change must be made during a stoppage in play.
