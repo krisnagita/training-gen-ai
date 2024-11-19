@@ -142,8 +142,8 @@ def process_pdf(uploaded_files):
     with ThreadPoolExecutor(max_workers=3) as executor:
         
         # Map the load_pdf_data function to all PDF files with corresponding arguments
-        # results = list(executor.map(get_pdf_text, args))
-        results = list(executor.map(get_pdf_text_pypdf, args))
+        results = list(executor.map(get_pdf_text, args))
+        # results = list(executor.map(get_pdf_text_pypdf, args))
     
     return results
 

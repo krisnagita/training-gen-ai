@@ -5,6 +5,7 @@ from unstructured.partition.pdf import partition_pdf
 from .model import model_embedding
 from langchain_community.vectorstores import FAISS
 from concurrent.futures import ThreadPoolExecutor
+from langchain_community.document_loaders import PyPDFLoader
 import cv2
 
 def get_pdf_text(pdf_path):
@@ -25,6 +26,26 @@ def get_pdf_text(pdf_path):
     for i in range(0, len(extracted_element)):
         data_metadata = extracted_element[i].metadata.to_dict()
         extracted_pdf.append(Document(page_content=extracted_element[i].text, metadata=data_metadata))
+    
+    return extracted_pdf
+
+def get_pdf_text_pypdf(pdf_path):
+    """
+    Extracts text and metadata from a PDF and returns them as Document objects using PyPDFLoader.
+
+    Args:
+    pdf_path (str): Path to the PDF file to process.
+
+    Returns:
+    extracted_pdf (list): A list of `Document` objects containing page content and metadata for each PDF page.
+    """
+    #FILL THIS BLANK (Hint: Using PyPDFLoader)
+    loader = " ... "(pdf_path)
+    extracted_pdf = []
+    
+    ##FILL THIS BLANK (Hint: Call the loader)
+    for page in " ... ".load():
+        extracted_pdf.append(page)
     
     return extracted_pdf
 
